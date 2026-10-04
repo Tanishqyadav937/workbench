@@ -1,0 +1,18 @@
+# Auto-loaded by `docker compose` next to docker-compose.yml.
+# Adds ONE narrow bridge so internal services can use Ollama running on the Mac host.
+#
+#   internal services --(workbench_net, internal)--> llm-bridge --(host_net)--> host.docker.internal:11434
+#
+# Everything else stays on the internal network with no route out.
+services:
+  llm-bridge:
+    image: alpine/socat:latest
+    command: TCP-LISTEN:11434,fork,reuseaddr TCP:host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks: [workbench_net, host_net]
+    restart: unless-stopped
+
+networks:
+  host_net:
+    driver: bridge

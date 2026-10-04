@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Task Graph Schema",
+  "description": "Represents a task decomposed into a directed acyclic graph (DAG) of sub-tasks for agentic execution",
+  "type": "object",
+  "required": ["task_id", "goal", "purpose", "user", "status", "nodes", "limits"],
+  "properties": {
+    "task_id": {"type": "string", "pattern": "^T-[0-9]+$"},
+    "goal": {"type": "string", "minLength": 10},
+    "purpose": {"type": "string", "enum": ["inspection_review", "audit", "training", "drafting", "general_qa", "calculation", "code_generation", "other"]},
+    "user": {"type": "string", "pattern": "^u-[0-9]+$"},
+    "status": {"type": "string", "enum": ["pending", "running", "paused", "completed", "failed"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "limits": {
+      "type": "object",
+      "required": ["max_nodes", "max_retries", "max_tool_calls", "timeout_s"],
+      "properties": {
+        "max_nodes": {"type": "integer", "minimum": 1, "maximum": 100},
+        "max_retries": {"type": "integer", "minimum": 0, "maximum": 10},
+        "max_tool_calls": {"type": "integer", "minimum": 0},
+        "timeout_s": {"type": "integer", "minimum": 60}
+      }
+    },
+    "nodes": {"type": "array", "items": {"type": "object"}}
+  }
+}

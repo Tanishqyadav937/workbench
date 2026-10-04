@@ -1,0 +1,42 @@
+{
+  "_comment": "Demo users for the RBAC step. Clearance order: public < internal < confidential < board_only.",
+  "users": [
+    {
+      "id": "u-junior",
+      "name": "Asha (Junior Engineer)",
+      "department": "mechanical",
+      "clearance": "internal",
+      "roles": [
+        "engineer"
+      ]
+    },
+    {
+      "id": "u-senior",
+      "name": "Vikram (Senior Engineer / Approver)",
+      "department": "mechanical",
+      "clearance": "confidential",
+      "roles": [
+        "engineer",
+        "approver"
+      ]
+    },
+    {
+      "id": "u-comply",
+      "name": "Neha (Compliance Officer)",
+      "department": "compliance",
+      "clearance": "confidential",
+      "roles": [
+        "compliance"
+      ]
+    },
+    {
+      "id": "u-admin",
+      "name": "Sandeep (Security Admin)",
+      "department": "it",
+      "clearance": "internal",
+      "roles": [
+        "admin"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# First matching rule wins. Within a rule, the first model that is healthy, allowed for the
+# request's sensitivity and loadable is used; otherwise the model's `fallback` chain; otherwise an explicit error.
+rules:
+  - id: r1
+    match: { task_type: code_generation }
+    prefer: [qwen2.5-coder:7b]
+  - id: r2
+    match: { modality: [image, pdf_scanned, mixed] }
+    prefer: [qwen2.5vl:7b]
+  - id: r3
+    match: { task_type: [summarization, drafting, analysis, retrieval_qa] }
+    prefer: [qwen3:8b]
+  - id: r4
+    match: { task_type: general_chat }
+    prefer: [qwen3:8b]
+default: qwen3:8b
+# The intent classifier itself runs on qwen3:8b with constrained JSON output and think=false.

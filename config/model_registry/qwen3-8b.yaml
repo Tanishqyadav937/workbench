@@ -1,0 +1,12 @@
+model_id: qwen3:8b
+backend: ollama
+endpoint: http://ollama.internal:11434        # see docs/LLM_ACCESS.md
+capabilities: [general_chat, summarization, drafting, analysis, retrieval_qa, intent_classification]
+context_window: 32768
+approx_memory_gb: 5.2
+priority: 1
+fallback: null
+min_clearance_for_use: public            # local model: allowed for any sensitivity
+request_options:
+  think: false                           # IMPORTANT: otherwise a long reasoning block breaks JSON output
+  keep_alive: 10m

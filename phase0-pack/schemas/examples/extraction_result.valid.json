@@ -1,0 +1,12 @@
+{
+  "doc_id": "d-203",
+  "page": 1,
+  "threshold": 0.8,
+  "engine": "qwen2.5vl:7b",
+  "fields": [
+    { "name": "equipment_tag", "value": "P-101A", "confidence": 0.97,
+      "bbox": [120, 210, 260, 240], "needs_review": false },
+    { "name": "wall_thickness_mm", "value": "6.4", "confidence": 0.62,
+      "bbox": [410, 520, 470, 550], "needs_review": true, "confirmed_by": null }
+  ]
+}

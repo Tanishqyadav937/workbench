@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.local/schemas/rag_chunk_payload.schema.json",
+  "title": "RagChunkPayload",
+  "description": "Payload stored with each vector in Qdrant (design.md 3.5). The RBAC / purpose / consent filter runs on these fields inside the query.",
+  "type": "object",
+  "required": ["chunk_id", "doc_id", "text", "classification", "allowed_purposes", "department", "owner", "consent_status"],
+  "additionalProperties": false,
+  "properties": {
+    "chunk_id": { "type": "string", "pattern": "^c-[0-9]+$" },
+    "doc_id": { "type": "string", "pattern": "^d-[0-9]+$" },
+    "text": { "type": "string", "minLength": 1 },
+    "page": { "type": ["integer", "null"], "minimum": 1 },
+    "section": { "type": ["string", "null"] },
+    "classification": { "enum": ["public", "internal", "confidential", "board_only"] },
+    "allowed_purposes": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "department": { "type": "string", "minLength": 1 },
+    "owner": { "type": "string", "minLength": 1 },
+    "consent_status": { "enum": ["active", "revoked"] },
+    "last_modified": { "type": "string", "format": "date" },
+    "source_bbox": {
+      "type": ["array", "null"],
+      "items": { "type": "number" },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "pii_redacted": { "type": "boolean" }
+  }
+}

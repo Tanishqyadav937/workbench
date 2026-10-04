@@ -1,0 +1,14 @@
+{
+  "task_id": "T-001",
+  "node_id": "n3",
+  "classification": {
+    "task_type": "drafting", "modality": "text", "complexity": "medium",
+    "sensitivity": "confidential", "confidence": 0.91
+  },
+  "rule_matched": "r3",
+  "candidates": ["qwen3:8b"],
+  "selected": "qwen3:8b",
+  "fallback_used": false,
+  "reason": "preferred model healthy and cleared for confidential data",
+  "latency_ms": 41
+}

@@ -1,0 +1,15 @@
+{
+  "chunk_id": "c-8812",
+  "doc_id": "d-203",
+  "text": "Pressure vessel V-210 shall be inspected every 24 months; thickness readings below 5.0 mm require engineering review.",
+  "page": 14,
+  "section": "6.2",
+  "classification": "confidential",
+  "allowed_purposes": ["inspection_review", "audit"],
+  "department": "mechanical",
+  "owner": "u-11",
+  "consent_status": "active",
+  "last_modified": "2026-08-12",
+  "source_bbox": [72, 300, 540, 360],
+  "pii_redacted": true
+}

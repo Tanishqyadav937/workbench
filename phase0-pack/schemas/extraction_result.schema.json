@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.local/schemas/extraction_result.schema.json",
+  "title": "ExtractionResult",
+  "description": "OCR/VLM output with per-field confidence (design.md 3.6). Fields below threshold must be flagged needs_review.",
+  "type": "object",
+  "required": ["doc_id", "page", "threshold", "fields"],
+  "additionalProperties": false,
+  "properties": {
+    "doc_id": { "type": "string", "minLength": 1 },
+    "page": { "type": "integer", "minimum": 1 },
+    "threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+    "engine": { "type": "string" },
+    "fields": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/field" }
+    }
+  },
+  "$defs": {
+    "field": {
+      "type": "object",
+      "required": ["name", "value", "confidence", "bbox", "needs_review"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "bbox": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0 },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "[x1, y1, x2, y2] in pixels"
+        },
+        "needs_review": { "type": "boolean" },
+        "confirmed_by": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

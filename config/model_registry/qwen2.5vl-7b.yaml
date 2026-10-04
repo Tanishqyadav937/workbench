@@ -1,0 +1,11 @@
+model_id: qwen2.5vl:7b
+backend: ollama
+endpoint: http://ollama.internal:11434
+capabilities: [ocr_extraction, handwriting, diagram_understanding, vision]
+context_window: 32768
+approx_memory_gb: 6.0
+priority: 1
+fallback: null                           # no text-only fallback: unreadable scans must go to a human
+min_clearance_for_use: public
+request_options:
+  keep_alive: 10m

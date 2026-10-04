@@ -1,0 +1,9 @@
+{
+  "doc_id": "d-203",
+  "page": 0,
+  "threshold": 0.8,
+  "fields": [
+    { "name": "wall_thickness_mm", "value": "6.4", "confidence": 1.4,
+      "bbox": [410, 520, 470], "needs_review": "yes" }
+  ]
+}

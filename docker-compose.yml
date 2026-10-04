@@ -1,0 +1,40 @@
+name: workbench
+networks:
+  workbench_net:
+    driver: bridge
+    internal: true
+  edge_net:
+    driver: bridge
+services:
+  api:
+    image: python:3.12-slim
+    command: python -m http.server 8000
+    networks:
+    - workbench_net
+    extra_hosts:
+    - ollama.internal:host-gateway
+  qdrant:
+    image: qdrant/qdrant:latest
+    networks:
+    - workbench_net
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: workbench
+    networks:
+    - workbench_net
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+    - workbench_net
+  grafana:
+    image: grafana/grafana:latest
+    networks:
+    - workbench_net
+  edge:
+    image: nginx:alpine
+    ports:
+    - 127.0.0.1:8080:80
+    networks:
+    - workbench_net
+    - edge_net

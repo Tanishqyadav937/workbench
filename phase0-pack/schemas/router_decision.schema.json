@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.local/schemas/router_decision.schema.json",
+  "title": "RouterDecision",
+  "description": "Record of one routing decision (design.md 3.2). Shown in the UI and written to the ledger.",
+  "type": "object",
+  "required": ["task_id", "node_id", "classification", "rule_matched", "candidates", "selected", "reason", "latency_ms"],
+  "additionalProperties": false,
+  "properties": {
+    "task_id": { "type": "string", "pattern": "^T-[0-9]+$" },
+    "node_id": { "type": "string", "pattern": "^n[0-9]+$" },
+    "classification": {
+      "type": "object",
+      "required": ["task_type", "modality", "complexity", "sensitivity", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "task_type": {
+          "enum": ["general_chat", "summarization", "drafting", "code_generation", "ocr_extraction", "retrieval_qa", "analysis"]
+        },
+        "modality": { "enum": ["text", "image", "pdf_scanned", "mixed"] },
+        "complexity": { "enum": ["low", "medium", "high"] },
+        "sensitivity": { "enum": ["public", "internal", "confidential", "board_only"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "rule_matched": { "type": ["string", "null"] },
+    "candidates": { "type": "array", "items": { "type": "string" } },
+    "selected": { "type": ["string", "null"], "description": "null only when no allowed model is available" },
+    "fallback_used": { "type": "boolean" },
+    "reason": { "type": "string", "minLength": 1 },
+    "latency_ms": { "type": "number", "minimum": 0 }
+  }
+}

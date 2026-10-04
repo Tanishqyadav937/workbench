@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.local/schemas/ledger_entry.schema.json",
+  "title": "LedgerEntry",
+  "description": "One append-only, hash-chained audit record (design.md 3.8). Payloads hold hashes and ids, not sensitive content.",
+  "type": "object",
+  "required": ["seq", "ts", "actor", "event", "payload", "prev_hash", "hash"],
+  "additionalProperties": false,
+  "properties": {
+    "seq": { "type": "integer", "minimum": 0 },
+    "ts": { "type": "string", "format": "date-time" },
+    "actor": {
+      "type": "object",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["user", "agent", "system"] },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "event": {
+      "enum": [
+        "auth.login", "model.call", "router.decision", "tool.call", "file.access",
+        "retrieval.query", "checkpoint.decision", "consent.change", "erasure",
+        "deliverable.export", "admin.model_reload", "boot.weights_verified"
+      ]
+    },
+    "payload": { "type": "object" },
+    "prev_hash": { "type": "string", "pattern": "^sha256:([0-9a-f]{64}|GENESIS)$" },
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

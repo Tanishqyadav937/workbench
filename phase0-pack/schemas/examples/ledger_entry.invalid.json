@@ -1,0 +1,9 @@
+{
+  "seq": -5,
+  "ts": "2026-10-03T10:15:30.120Z",
+  "actor": { "type": "robot", "id": "orchestrator" },
+  "event": "something.else",
+  "payload": {},
+  "prev_hash": "not-a-hash",
+  "hash": "sha256:123"
+}

@@ -1,0 +1,12 @@
+{
+  "task_id": "T-001",
+  "node_id": "n3",
+  "classification": {
+    "task_type": "write_poetry", "modality": "text", "complexity": "medium",
+    "sensitivity": "confidential", "confidence": 1.7
+  },
+  "rule_matched": "r3",
+  "candidates": ["qwen3:8b"],
+  "selected": "qwen3:8b",
+  "latency_ms": 41
+}

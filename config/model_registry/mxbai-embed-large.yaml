@@ -1,0 +1,7 @@
+model_id: mxbai-embed-large
+backend: ollama
+endpoint: http://ollama.internal:11434
+role: embedding                          # used by the retrieval service, never by the router
+dimensions: 1024
+approx_memory_gb: 0.7
+min_clearance_for_use: public

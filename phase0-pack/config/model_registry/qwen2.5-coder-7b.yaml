@@ -1,0 +1,11 @@
+model_id: qwen2.5-coder:7b
+backend: ollama
+endpoint: http://llm-bridge:11434
+capabilities: [code_generation, data_analysis_code]
+context_window: 32768
+approx_memory_gb: 4.7
+priority: 1
+fallback: qwen3:8b
+min_clearance_for_use: public
+request_options:
+  keep_alive: 10m

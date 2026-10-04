@@ -1,0 +1,9 @@
+{
+  "task_id": "T-001",
+  "goal": "Draft approval note",
+  "purpose": "inspection_review",
+  "user": "u-42",
+  "status": "almost_done",
+  "limits": { "max_nodes": 12, "max_retries": 99, "max_tool_calls": 30, "timeout_s": 1800 },
+  "nodes": []
+}

@@ -1,0 +1,21 @@
+== Schemas ==
+PASS  5 schemas valid, examples behave
+== Demo data ==
+PASS  demo_data has 19 files
+PASS  users.json present
+PASS  INDEX.csv present
+SKIP  injection check (needs pdftotext: brew install poppler)
+PASS  DEMO_DOMAIN.md and DEMO_SCRIPT.md present
+== Models (Ollama) ==
+PASS  model qwen3:8b installed
+PASS  model qwen2.5-coder:7b installed
+PASS  model qwen2.5vl:7b installed
+PASS  model mxbai-embed-large installed
+PASS  no cloud models
+== Docker ==
+PASS  compose files valid
+PASS  api container cannot reach the internet
+PASS  internal networking works (api -> qdrant)
+FAIL  llm-bridge not reachable (see docs/LLM_ACCESS.md)
+
+Result: 13 passed, 1 failed

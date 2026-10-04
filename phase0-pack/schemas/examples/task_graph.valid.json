@@ -1,0 +1,18 @@
+{
+  "task_id": "T-001",
+  "goal": "Draft approval note from inspection report IR-2026-014",
+  "purpose": "inspection_review",
+  "user": "u-42",
+  "status": "running",
+  "limits": { "max_nodes": 12, "max_retries": 3, "max_tool_calls": 30, "timeout_s": 1800 },
+  "nodes": [
+    { "id": "n1", "type": "ocr_extract", "depends_on": [], "status": "done",
+      "model_used": "qwen2.5vl:7b", "output_ref": "artifact://n1",
+      "success_criteria": "all fields have confidence >= 0.80 or are flagged",
+      "verification": { "passed": true, "notes": "2 fields flagged" },
+      "requires_human_review": true, "attempts": 1 },
+    { "id": "n2", "type": "retrieve", "depends_on": ["n1"], "status": "pending", "attempts": 0 },
+    { "id": "n3", "type": "draft", "depends_on": ["n1", "n2"], "status": "pending",
+      "requires_human_review": true, "attempts": 0 }
+  ]
+}

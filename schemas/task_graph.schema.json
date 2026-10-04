@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.local/schemas/task_graph.schema.json",
+  "title": "TaskGraph",
+  "description": "Explicit, inspectable agent state. One document per task (design.md 3.3).",
+  "type": "object",
+  "required": ["task_id", "goal", "purpose", "user", "status", "limits", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "task_id": { "type": "string", "pattern": "^T-[0-9]+$" },
+    "goal": { "type": "string", "minLength": 1 },
+    "purpose": { "type": "string", "minLength": 1 },
+    "user": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["planned", "running", "paused", "completed", "failed", "cancelled"] },
+    "limits": {
+      "type": "object",
+      "required": ["max_nodes", "max_retries", "max_tool_calls", "timeout_s"],
+      "additionalProperties": false,
+      "properties": {
+        "max_nodes": { "type": "integer", "minimum": 1, "maximum": 50 },
+        "max_retries": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "max_tool_calls": { "type": "integer", "minimum": 0 },
+        "timeout_s": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id", "type", "depends_on", "status", "attempts"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^n[0-9]+$" },
+        "type": {
+          "enum": ["ocr_extract", "retrieve", "summarize", "draft", "run_code", "critique", "export", "answer"]
+        },
+        "depends_on": { "type": "array", "items": { "type": "string", "pattern": "^n[0-9]+$" } },
+        "status": { "enum": ["pending", "running", "done", "failed", "skipped", "awaiting_human"] },
+        "model_used": { "type": ["string", "null"] },
+        "inputs": { "type": "object" },
+        "output_ref": { "type": ["string", "null"] },
+        "success_criteria": { "type": "string" },
+        "verification": {
+          "type": "object",
+          "required": ["passed"],
+          "properties": {
+            "passed": { "type": "boolean" },
+            "notes": { "type": "string" }
+          }
+        },
+        "requires_human_review": { "type": "boolean" },
+        "attempts": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

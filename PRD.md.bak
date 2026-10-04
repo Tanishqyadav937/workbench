@@ -1,0 +1,326 @@
+# Product Requirements Document (PRD)
+
+## Sovereign On-Premise Agentic AI Workbench
+**A provably air-gapped, privacy-preserving AI agent platform**
+
+| Field | Value |
+|---|---|
+| Hackathon | IndustrySolve Hackathon, IIIT Delhi 2026 |
+| Theme | 6. Cybersecurity & Privacy-Preserving Technology |
+| Origin problem | MRPL PS 26117 (Smart Automation, Software), used as the primary use-case domain |
+| Document status | Draft v1.0 |
+| Related doc | `sovereign-agentic-ai-workbench-architecture.md` |
+
+---
+
+## 1. Overview
+
+### 1.1 One-line pitch
+An on-premise AI agent platform that lets organisations use powerful open-weight AI on sensitive data with **cryptographic and network-level proof** that nothing leaves the building, and with **built-in consent, access control and erasure** for the data the AI touches.
+
+### 1.2 Problem statement
+Organisations that handle sensitive data (refineries, PSUs, defence-linked firms, hospitals, banks) cannot safely use cloud AI tools. Sending documents, drawings, code or personal records to a third-party API creates leakage, compliance and sovereignty risks. Existing local-LLM setups (e.g. Ollama + a chat UI) solve only the "run a model locally" part. They do not provide:
+
+- Proof that no data egresses (claims are made, not demonstrated).
+- Safe execution of AI-generated code and tool calls.
+- Access-controlled retrieval over internal documents.
+- Consent, purpose limitation and erasure for personal data processed by the AI.
+- An auditable record of what the AI did and why.
+
+### 1.3 Why this fits Theme 6
+Theme 6 asks for systems that **resist compromise** and **reduce unnecessary collection of personal data**. This product addresses both:
+
+| Theme 6 requirement | How the product addresses it |
+|---|---|
+| Resist compromise | Zero-egress network design, sandboxed tool execution, signed model weights, tamper-evident audit ledger |
+| Protect privacy | Access-scoped retrieval, PII redaction, purpose-limited data use |
+| Consent dashboard / erasure | Governance dashboard to view data usage, withdraw consent per purpose, and trigger erasure |
+| Reduced data collection | Data minimisation by design: no external calls, no telemetry, only task-relevant chunks enter model context |
+
+---
+
+## 2. Goals and Non-Goals
+
+### 2.1 Goals
+1. **Provable sovereignty:** demonstrate zero outbound connections during a full agent session.
+2. **Capable agentic AI:** multi-step tasks (plan, execute, verify, deliver) running entirely on local models.
+3. **Model-agnostic:** new open-weight models can be added through configuration only.
+4. **Privacy by design:** RBAC-scoped retrieval, PII redaction, consent and erasure controls.
+5. **Auditability:** every model call, tool call and file access is recorded in a verifiable log.
+6. **Hackathon-demo ready:** the full system runs on a single mid-range GPU (24-48 GB VRAM).
+
+### 2.2 Non-Goals
+- Training or fine-tuning foundation models.
+- Competing with frontier cloud models on raw capability.
+- Replacing enterprise IAM; the product integrates with existing LDAP/Keycloak.
+- Real-time control of industrial equipment (the system advises and drafts; humans decide).
+- Certified compliance (e.g. ISO 27001) within the hackathon scope; the design supports it but certification is out of scope.
+
+---
+
+## 3. Target Users and Personas
+
+| Persona | Description | Key needs |
+|---|---|---|
+| **Engineer / Analyst** (primary) | Reviews inspection reports, drawings and datasets; writes calculations and scripts | Fast, accurate drafting; trustworthy citations; no data leaving the network |
+| **Manager / Approver** | Reviews and signs off on notes and presentations | Clear summaries, visible sources, explicit approval gates |
+| **Security / IT Administrator** | Deploys and governs the system | Proof of isolation, model management, audit access, update control |
+| **Data Protection / Compliance Officer** | Owns privacy obligations | Consent view, erasure workflow, access logs, classification enforcement |
+
+---
+
+## 4. Use Cases
+
+1. **Inspection report to approval note.** Upload a scanned inspection report; the agent extracts findings via OCR/VLM, grounds them with SOPs from the knowledge base, and drafts a `.docx` approval note with citations.
+2. **Engineering calculation.** The agent writes and runs code in a sandbox to compute results and delivers an `.xlsx` with live formulas for audit.
+3. **Drawing / P&ID understanding.** Extract equipment tags and annotations with confidence scores; low-confidence fields are flagged for human review.
+4. **Knowledge-base Q&A.** Ask questions over internal documents with RBAC-filtered, cited answers.
+5. **Governance.** A compliance officer views which documents were used by which sessions, withdraws consent for a purpose, and triggers erasure.
+6. **Sovereignty verification.** An administrator opens the live dashboard and audit ledger to verify zero egress and log integrity.
+
+---
+
+## 5. Functional Requirements
+
+Priority key: **P0** = must have for demo, **P1** = should have, **P2** = stretch.
+
+### 5.1 Model Serving and Routing
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-1.1 | Serve multiple open-weight models locally through a pluggable backend (vLLM for production; Ollama acceptable for demo) | P0 |
+| FR-1.2 | Declarative YAML model registry; adding a model requires no code change | P0 |
+| FR-1.3 | Two-stage router: intent classifier (task type, modality, complexity, sensitivity) followed by capability-matched model selection | P0 |
+| FR-1.4 | Routing decision visible in the UI for every task | P0 |
+| FR-1.5 | Fallback chain when a preferred model is unavailable or out of memory | P1 |
+| FR-1.6 | LRU model swapping to run multiple models on one GPU | P1 |
+| FR-1.7 | Optional verifier pass: a second model checks high-stakes outputs | P2 |
+| FR-1.8 | Runtime model reload via admin endpoint without redeploy | P1 |
+
+### 5.2 Agent Orchestration
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-2.1 | Planner decomposes tasks into a DAG of sub-tasks | P0 |
+| FR-2.2 | Each sub-task cycle: route, execute, observe, critique, then retry (max 3) or complete | P0 |
+| FR-2.3 | Explicit, inspectable JSON task state shown as a live "agent trace" panel | P0 |
+| FR-2.4 | Human-in-the-loop checkpoint gates, configurable per task type | P0 |
+| FR-2.5 | Bounded autonomy: configurable max depth, retries, tool calls and wall-clock timeout | P1 |
+| FR-2.6 | Session persistence so long tasks can be paused and resumed | P2 |
+
+### 5.3 Tool Execution Sandbox
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-3.1 | Code runs in an ephemeral isolated container (gVisor/Firecracker or hardened Docker) with **no network namespace** | P0 |
+| FR-3.2 | File access only through a broker enforcing path allowlist and user RBAC | P0 |
+| FR-3.3 | seccomp filter blocking non-loopback `connect()` as defense in depth | P1 |
+| FR-3.4 | Execution logs (stdout, stderr, test results) returned with every code deliverable | P0 |
+| FR-3.5 | Tools registered via OpenAI-compatible function-calling schema (model-agnostic) | P1 |
+
+### 5.4 Knowledge Base and Retrieval (RAG)
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-4.1 | Ingest PDF (text and scanned), DOCX, XLSX and email formats | P0 |
+| FR-4.2 | Table-aware chunking; on-prem multilingual embeddings (e.g. BGE-M3) | P1 |
+| FR-4.3 | Self-hosted vector store (Qdrant/Milvus), encrypted at rest | P0 |
+| FR-4.4 | Hybrid retrieval (dense + BM25 + metadata filters) with local re-ranking | P1 |
+| FR-4.5 | **RBAC and classification filtering applied before chunks reach the model context** | P0 |
+| FR-4.6 | Mandatory citations (document, page/section, last-modified); answer "not found" when confidence is low | P0 |
+| FR-4.7 | Incremental re-indexing on file changes | P2 |
+
+### 5.5 Multimodal Pipeline
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-5.1 | Pre-processing (deskew, denoise, contrast) for scanned input | P1 |
+| FR-5.2 | Printed-text OCR (PaddleOCR/Tesseract) with bounding boxes | P0 |
+| FR-5.3 | Handwriting and diagram understanding via a vision-language model | P1 |
+| FR-5.4 | Structured JSON output with per-field confidence and source region | P0 |
+| FR-5.5 | Fields below the confidence threshold are flagged for mandatory human confirmation | P0 |
+
+### 5.6 Deliverable Generation
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-6.1 | `.docx` approval notes and reports from structured templates with citations | P0 |
+| FR-6.2 | `.xlsx` outputs containing real formulas, not pasted values | P1 |
+| FR-6.3 | `.pptx` presentations from an approved template | P2 |
+| FR-6.4 | Code delivered as a diff with execution log | P1 |
+| FR-6.5 | Every deliverable links to model version, prompt, retrieved chunks and tool calls | P1 |
+
+### 5.6b Privacy and Consent Governance (Theme 6 core)
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-7.1 | **Consent and data-usage dashboard:** shows, per document/dataset, which sessions and purposes accessed it | P0 |
+| FR-7.2 | **Consent withdrawal per purpose:** revoked purposes are blocked from retrieval immediately | P1 |
+| FR-7.3 | **Erasure workflow:** deletes a document from the source store, vector index, caches and derived chunks, and records the erasure in the audit ledger | P1 |
+| FR-7.4 | **Purpose-limited retrieval:** each session declares a purpose; only data tagged for that purpose is retrievable | P1 |
+| FR-7.5 | **PII redaction** (local NER) before indexing, with measurable detection recall on a test set | P0 |
+| FR-7.6 | Classification levels (Public / Internal / Confidential / Board-only) inherited by all outputs | P0 |
+| FR-7.7 | Privacy-preserving aggregate query returning population-level statistics without exposing individual records | P2 |
+
+### 5.7 Sovereignty Proof and Audit
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-8.1 | Stack runs with no default route to WAN; egress firewall defaults to DROP | P0 |
+| FR-8.2 | Live egress monitor on a Grafana dashboard showing attempted outbound connections and DNS lookups | P0 |
+| FR-8.3 | Append-only, hash-chained audit ledger for model calls, tool calls and file access, with a verification command | P0 |
+| FR-8.4 | SHA-256 verification of model weights against a signed manifest at boot | P1 |
+| FR-8.5 | Air-gapped update path via vetted offline transfer with checksum verification | P2 |
+| FR-8.6 | Physical NIC-disconnect demo: system continues working identically | P0 |
+
+### 5.8 Security Demonstrations (Threat Model)
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-9.1 | Documented threat model (see Section 8) | P0 |
+| FR-9.2 | Demo: sandbox blocks a simulated exfiltration attempt from AI-generated code | P0 |
+| FR-9.3 | Demo: prompt injection embedded in an uploaded document does not trigger unauthorised tool use or data access | P1 |
+| FR-9.4 | Demo: tampered model weights or modified audit log entries are detected | P1 |
+
+---
+
+## 6. Non-Functional Requirements
+
+| Category | Requirement |
+|---|---|
+| **Security** | No outbound network calls from any component; secrets encrypted; least-privilege service accounts |
+| **Privacy** | No telemetry; data never used to train models; PII handled per classification |
+| **Performance** | Interactive responses stream within seconds; simple tasks routed to small models for low latency |
+| **Hardware** | Demo runs on a single GPU (24-48 GB); design scales to multi-GPU clusters |
+| **Reliability** | Fallback models; bounded agent loops to prevent runaway compute |
+| **Auditability** | 100% of model/tool/file actions logged; log integrity verifiable |
+| **Extensibility** | New models, tools and routing rules added by configuration |
+| **Usability** | Web UI with agent trace, citations and approval prompts understandable to non-technical staff |
+| **Portability** | Docker Compose for demo; Kubernetes for production |
+
+---
+
+## 7. System Architecture (Summary)
+
+Full detail is in the architecture document. Components:
+
+1. **Client:** Web UI (chat, agent trace, approval prompts, governance dashboard).
+2. **API layer:** FastAPI + WebSocket streaming; Keycloak/LDAP SSO with RBAC.
+3. **Agent orchestration core:** planner, model router, tool dispatcher, memory manager, critic, checkpoint gate.
+4. **Model serving layer:** vLLM (or Ollama for demo) with YAML model registry.
+5. **Tool sandbox:** network-less ephemeral containers plus file broker.
+6. **RAG engine:** parsers, embeddings, vector store, hybrid retriever with RBAC filter.
+7. **Multimodal pipeline:** OCR and VLM with confidence gating.
+8. **Governance layer:** consent, purpose limitation, erasure, PII redaction.
+9. **Sovereignty and audit layer:** egress monitor, hash-chained ledger, weight verification.
+
+Reference stack: vLLM/Ollama, Qwen3 / Qwen2.5-Coder / Qwen2.5-VL (GPT-OSS-120B where hardware permits), Qdrant, BGE-M3, PaddleOCR, FastAPI, Keycloak, Prometheus + Grafana, Docker/Kubernetes.
+
+---
+
+## 8. Threat Model
+
+| # | Threat | Mitigation | Verified by |
+|---|---|---|---|
+| T1 | Data exfiltration to the internet by any component | No WAN route, DROP-all egress, egress monitor | Live dashboard, NIC unplug demo |
+| T2 | AI-generated code attempts network calls or reads outside its workspace | Network-less sandbox, seccomp, file broker | Exfiltration attempt demo (FR-9.2) |
+| T3 | Prompt injection via uploaded documents | Tool-call allowlist, human checkpoints, RBAC enforced outside the model | Injection demo (FR-9.3) |
+| T4 | Unauthorised user reads documents above their clearance | Pre-retrieval RBAC and classification filter | Access test with two users |
+| T5 | Tampered or substituted model weights | Signed manifest and SHA-256 check at boot | Tamper demo (FR-9.4) |
+| T6 | Audit log manipulation | Hash-chained append-only ledger | Verification command detects edits |
+| T7 | Personal data retained after consent withdrawal | Consent revocation and erasure workflow | Erasure demo (FR-7.3) |
+| T8 | Hallucinated or wrong outputs used in decisions | Citations, confidence gating, critic pass, human sign-off | Low-confidence flagging demo |
+| T9 | Malicious update via supply chain | Offline vetted updates with checksum verification | Process documentation |
+
+**Out of scope threats:** physical compromise of the host, insider with root access, side-channel attacks on GPUs.
+
+---
+
+## 9. Success Metrics
+
+| Metric | Target |
+|---|---|
+| External connections observed during full demo | **0** |
+| Tasks auto-routed to a suitable model in the demo | ≥ 2 task types, correct model each time |
+| End-to-end agentic task (scan to `.docx`) | Completed with citations |
+| Sandbox exfiltration attempts blocked | 100% in the test set |
+| PII detection recall on the test set | ≥ 90% (measured and reported) |
+| Audit ledger tampering detected | 100% of test edits |
+| Unauthorised retrieval across clearance levels | 0 leaks in the access test |
+| Erasure completeness | Document absent from store, index and cache after erasure |
+
+---
+
+## 10. Demo Plan (5 steps)
+
+1. **Auto-routing:** run a coding prompt and a summarisation prompt; the trace panel shows different models selected.
+2. **End-to-end task:** scanned inspection report, then OCR/VLM extraction, then findings, then approval note `.docx` with citations.
+3. **Sandboxed code:** the agent writes and runs a script; show isolation and execution logs. Then run the simulated exfiltration attempt and show it blocked.
+4. **Privacy governance:** show the consent dashboard, withdraw consent for a purpose, trigger erasure, and show the ledger entry.
+5. **Sovereignty proof:** live egress dashboard shows zero connections; unplug the NIC; verify the audit ledger hash chain.
+
+---
+
+## 11. Differentiation
+
+**"Why not just Ollama + Open WebUI?"** Ollama is a local model runner, equivalent to one layer of this system. It does not provide capability-based routing, agent orchestration, sandboxed execution, RBAC-scoped retrieval, consent and erasure controls, or verifiable proof of zero egress. This product is the governed, auditable platform built on top of local models.
+
+Key differentiators:
+1. Provable (not claimed) sovereignty through monitoring and a tamper-evident ledger.
+2. Sandboxed agent execution with defense in depth.
+3. Privacy governance (consent, purpose limitation, erasure) as a first-class feature.
+4. Capability-contract model registry and router.
+
+---
+
+## 12. Scope and Milestones
+
+### 12.1 MVP (hackathon demo)
+All **P0** requirements: routing across at least two models, agent trace, sandboxed code, RAG with RBAC filter and citations, OCR extraction with confidence flags, `.docx` generation, consent dashboard (view), PII redaction, egress monitor, hash-chained ledger, threat model and exfiltration demo.
+
+### 12.2 Post-MVP
+**P1** items (consent withdrawal, erasure workflow, purpose limitation, weight verification, fallback chain, `.xlsx` formulas) followed by **P2** (verifier pass, `.pptx`, aggregate privacy-preserving queries, session resume, air-gapped update path).
+
+### 12.3 Suggested timeline (adjust to hackathon length)
+| Phase | Focus |
+|---|---|
+| 1 | Model serving, registry, router, API skeleton |
+| 2 | Agent core and sandbox |
+| 3 | RAG with RBAC, OCR/VLM pipeline |
+| 4 | Governance (PII, consent, erasure), audit ledger, egress monitor |
+| 5 | Deliverable generation, UI polish, threat-model demos, rehearsal |
+
+---
+
+## 13. Risks and Mitigations
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Limited GPU memory at the venue | Models fail to load | Quantised models, LRU swapping, fallback chain, smallest-model default |
+| Scope too large for the hackathon | Incomplete demo | Strict P0/P1/P2 prioritisation; build the sovereignty and governance demos early |
+| Local model quality below expectations | Weak outputs | Verifier pass, citations, human checkpoints, constrained task scope |
+| Looks like "just Ollama" to judges | Weak differentiation | Lead with proof, sandbox and governance demos |
+| Judges see security as a side feature | Poor Theme 6 fit | Frame the pitch around sovereignty and privacy; show the threat model and consent/erasure early |
+| OCR/VLM errors on handwriting | Incorrect extraction | Confidence gating, mandatory human confirmation |
+
+---
+
+## 14. Assumptions and Open Questions
+
+**Assumptions**
+- A workstation with at least one 24 GB+ GPU is available for the demo.
+- Public or synthetic datasets (inspection reports, P&IDs) are used; no real confidential data.
+- Open-weight model licences permit the intended use.
+
+**Open questions**
+1. Which demo domain will be shown to judges: refinery inspection (MRPL) or a neutral domain such as healthcare records?
+2. Will Ollama or vLLM be used on demo day (setup speed versus performance)?
+3. How deep should the consent and erasure feature go within the time available?
+4. Is the aggregate privacy-preserving query (FR-7.7) worth building, or is it better to polish the other demos?
+
+---
+
+## 15. Glossary
+
+| Term | Meaning |
+|---|---|
+| Air-gapped | A system with no connection to external networks |
+| Egress | Outbound network traffic leaving the system |
+| RAG | Retrieval-Augmented Generation, grounding model answers in retrieved documents |
+| RBAC | Role-Based Access Control |
+| VLM | Vision-Language Model |
+| OCR | Optical Character Recognition |
+| P&ID | Piping and Instrumentation Diagram |
+| Hash chain | A log where each entry includes the hash of the previous entry, making edits detectable |
+| Purpose limitation | Using data only for the purpose it was collected or consented for |
