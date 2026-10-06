@@ -1,0 +1,31 @@
+{
+  "_comment": "Labelled prompts for task B5. expected_model follows config/router_rules.yaml. Run with scripts/eval_router.py against the REAL models.",
+  "prompts": [
+    {"prompt": "Write a Python function that computes corrosion rate from two thickness readings and a time gap.", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+    {"prompt": "Give me a pandas snippet that reads V210_thickness_history.csv and fits a straight line to thickness vs year.", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+    {"prompt": "Write a SQL query that lists all vessels whose last thickness reading is below 5.0 mm.", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+    {"prompt": "Create a bash script that renames every IR-2026-*.pdf file to lowercase.", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+    {"prompt": "Compute the remaining life of a vessel at 4.8 mm with 4.2 mm retirement thickness and 0.4 mm/year corrosion by running code.", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+
+    {"prompt": "Summarise inspection report IR-2026-011 in three bullet points.", "expected_task": "summarization", "expected_model": "qwen3:8b"},
+    {"prompt": "Give me a short summary of the key findings in the heat exchanger E-205 report.", "expected_task": "summarization", "expected_model": "qwen3:8b"},
+    {"prompt": "Condense this vendor memo about gasket supply into two sentences.", "expected_task": "summarization", "expected_model": "qwen3:8b"},
+
+    {"prompt": "Draft an approval note for the V-210 follow-up inspection, citing the relevant SOPs.", "expected_task": "drafting", "expected_model": "qwen3:8b"},
+    {"prompt": "Write a polite email to the vendor asking them to confirm purchase order PO-77120.", "expected_task": "drafting", "expected_model": "qwen3:8b"},
+    {"prompt": "Prepare a one-page memo recommending increased monitoring frequency for vessel V-210.", "expected_task": "drafting", "expected_model": "qwen3:8b"},
+
+    {"prompt": "What does SOP-01 say is the minimum allowable thickness for vessel V-210?", "expected_task": "retrieval_qa", "expected_model": "qwen3:8b"},
+    {"prompt": "According to our SOPs, when must a heat exchanger tube be plugged?", "expected_task": "retrieval_qa", "expected_model": "qwen3:8b"},
+    {"prompt": "Which approval level is needed for a Management of Change that derates a pressure vessel?", "expected_task": "retrieval_qa", "expected_model": "qwen3:8b"},
+
+    {"prompt": "Compare the risks of continuing to operate V-210 versus shutting it down early, given a 1.5 year remaining life.", "expected_task": "analysis", "expected_model": "qwen3:8b"},
+    {"prompt": "Is a vibration reading of 5.2 mm/s on a pump bearing a concern, and what should we do next?", "expected_task": "analysis", "expected_model": "qwen3:8b"},
+
+    {"prompt": "Hello! How are you today?", "expected_task": "general_chat", "expected_model": "qwen3:8b"},
+    {"prompt": "What can you help me with?", "expected_task": "general_chat", "expected_model": "qwen3:8b"},
+
+    {"prompt": "Extract the equipment tag and thickness readings from this scanned report.", "attachments": [{"name": "IR-2026-014_SCAN.pdf", "mime": "application/pdf", "scanned": true}], "expected_task": "ocr_extraction", "expected_model": "qwen2.5vl:7b"},
+    {"prompt": "What does the handwriting on this photo say?", "attachments": [{"name": "photo.png", "mime": "image/png"}], "expected_task": "ocr_extraction", "expected_model": "qwen2.5vl:7b"}
+  ]
+}
