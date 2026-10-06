@@ -11,8 +11,6 @@ services:
     command: python -m http.server 8000
     networks:
     - workbench_net
-    extra_hosts:
-    - ollama.internal:host-gateway
   qdrant:
     image: qdrant/qdrant:latest
     networks:

@@ -1,13 +1,16 @@
 services:
   llm-bridge:
-    image: alpine/socat:latest
-    command: TCP-LISTEN:11434,fork,reuseaddr TCP:host.docker.internal:11434
+    image: nginx:alpine
+    volumes:
+      - ./llm-bridge-nginx.conf:/etc/nginx/conf.d/default.conf:ro
     extra_hosts:
-    - host.docker.internal:host-gateway
+      - "host.docker.internal:host-gateway"
     networks:
-    - workbench_net
-    - host_net
+      workbench_net:
+        aliases: [ollama.internal, llm-bridge]
+      host_net:
     restart: unless-stopped
+
 networks:
   host_net:
     driver: bridge
