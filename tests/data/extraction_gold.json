@@ -1,0 +1,4 @@
+{"_note": "One entry per sample scan you have: the true field values, so extraction accuracy can be measured.",
+ "scans": [
+  {"file": "REPLACE_sample_scan.pdf", "fields": {"equipment_tag": "REPLACE", "thickness_mm": "REPLACE", "date": "REPLACE"}}
+ ]}

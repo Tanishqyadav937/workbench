@@ -1,0 +1,4 @@
+{"_note": "Fill from your real SOPs; have a domain expert verify every expected_sop and answer.",
+ "questions": [
+  {"question": "REPLACE: minimum allowable thickness rule for pressure vessels", "expected_sop": "SOP-01", "expected_answer_contains": "REPLACE"}
+ ]}
