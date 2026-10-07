@@ -55,8 +55,8 @@ def main() -> int:
         task_ok += t_hit
         if args.verbose or not m_hit:
             flag = "ok  " if m_hit else "MISS"
-            print("%s %2d  task=%-14s (want %-14s) model=%-18s src=%s | %s" % (
-                flag, i, cls["task_type"], p["expected_task"], decision["selected"], source, p["prompt"][:60]))
+            print("%s %2d  task=%-14s (want %-14s) model=%-18s src=%s conf=%.2f | %s" % (
+                flag, i, cls["task_type"], p["expected_task"], decision["selected"], source, cls["confidence"], p["prompt"][:60]))
         if not m_hit:
             misses.append(i)
     n = len(prompts)

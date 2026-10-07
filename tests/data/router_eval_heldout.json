@@ -1,0 +1,8 @@
+{"prompts": [
+ {"prompt": "Turn this list of vessel tags into a CSV with one tag per row", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+ {"prompt": "Parse this log excerpt and output the thickness readings as JSON", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+ {"prompt": "Is 3.9 mm a problem for a vessel with a 4.2 mm minimum?", "expected_task": "analysis", "expected_model": "qwen3:8b"},
+ {"prompt": "Give me the gist of this vendor memo", "expected_task": "summarization", "expected_model": "qwen3:8b"},
+ {"prompt": "How does ultrasonic thickness testing work?", "expected_task": "general_chat", "expected_model": "qwen3:8b"},
+ {"prompt": "Write a note to the shift supervisor about tomorrow's shutdown", "expected_task": "drafting", "expected_model": "qwen3:8b"}
+]}
