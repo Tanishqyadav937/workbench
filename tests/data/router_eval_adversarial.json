@@ -1,0 +1,12 @@
+{"prompts": [
+ {"prompt": "Write a summary script that condenses each inspection report", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+ {"prompt": "Summarise what this Python function does in two sentences", "expected_task": "summarization", "expected_model": "qwen3:8b"},
+ {"prompt": "Analyze the thickness trend for V-210 and draft a reply to the vendor", "expected_task": "analysis", "expected_model": "qwen3:8b"},
+ {"prompt": "What does SOP-03 say about re-inspection, and write a SQL query to find vessels that violate it?", "expected_task": "retrieval_qa", "expected_model": "qwen3:8b"},
+ {"prompt": "hi, can you summarise IR-2026-011?", "expected_task": "summarization", "expected_model": "qwen3:8b"},
+ {"prompt": "Is this reading okay?", "expected_task": "analysis", "expected_model": "qwen3:8b"},
+ {"prompt": "Rewrite this email to be shorter", "expected_task": "drafting", "expected_model": "qwen3:8b"},
+ {"prompt": "Convert this thickness table to JSON", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"},
+ {"prompt": "Explain how remaining life is calculated", "expected_task": "general_chat", "expected_model": "qwen3:8b"},
+ {"prompt": "Calculate corrosion rate: 6.1 mm in 2022, 5.4 mm in 2026", "expected_task": "code_generation", "expected_model": "qwen2.5-coder:7b"}
+]}

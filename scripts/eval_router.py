@@ -28,6 +28,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--verbose", action="store_true", help="print every prompt")
     ap.add_argument("--classifier-model", default="qwen3:8b")
+    ap.add_argument("--prompts", default=os.path.join(ROOT, "tests", "data", "router_eval_prompts.json"), help="path to labelled prompts JSON")
     args = ap.parse_args()
 
     url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
@@ -41,7 +42,7 @@ def main() -> int:
     selector = Selector(registry, rules, lambda spec: True)   # assume all models installed: we test routing, not health
     classifier = IntentClassifier(backend, args.classifier_model)
 
-    prompts = json.load(open(os.path.join(ROOT, "tests", "data", "router_eval_prompts.json")))["prompts"]
+    prompts = json.load(open(args.prompts))["prompts"]
     model_ok = task_ok = 0
     misses = []
     t0 = time.time()
