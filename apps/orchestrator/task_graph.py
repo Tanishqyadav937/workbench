@@ -230,6 +230,8 @@ class TaskGraph:
             'completed_at': self.completed_at,
             'total_attempts': self.total_attempts,
             'tool_calls_made': self.tool_calls_made,
+            'pending_checkpoints': [asdict(c) for c in self.pending_checkpoints],
+            'checkpoint_decisions': {k: asdict(v) for k, v in self.checkpoint_decisions.items()},
         }
     
     @classmethod
@@ -261,6 +263,14 @@ class TaskGraph:
         # Rebuild limits
         if 'limits' in data:
             task.limits = TaskLimits(**data['limits'])
+        
+        # Rebuild pending checkpoints
+        for c in data.get('pending_checkpoints', []):
+            task.pending_checkpoints.append(Checkpoint(**c))
+        
+        # Rebuild checkpoint decisions
+        for k, c in data.get('checkpoint_decisions', {}).items():
+            task.checkpoint_decisions[k] = Checkpoint(**c)
         
         return task
 

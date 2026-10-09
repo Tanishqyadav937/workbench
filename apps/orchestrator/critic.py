@@ -253,9 +253,20 @@ class RetryPolicy:
         node_type: str,
         attempts: int,
         max_retries: int,
-        critic_result: CriticResult,
+        critic_result: Optional[CriticResult],
     ) -> Tuple[bool, Optional[str]]:
-        """Decide whether to retry and suggest feedback."""
+        """Decide whether to retry and suggest feedback.
+        
+        Args:
+            critic_result: Verification result, or None if executor raised an exception
+        
+        Returns:
+            (should_retry, feedback_message)
+        """
+        
+        if critic_result is None:
+            # Executor raised an exception; retry if attempts left
+            return attempts < max_retries, None
         
         if not critic_result.passed and attempts < max_retries:
             feedback = critic_result.retry_prompt_delta or "\n".join(critic_result.required_fixes)

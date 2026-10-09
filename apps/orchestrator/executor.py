@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import hashlib
 from typing import Dict, List, Any, Optional, Callable, Awaitable
 from dataclasses import dataclass
 from datetime import datetime
@@ -22,7 +23,7 @@ class ExecutionContext:
     node: TaskNode
     policy_check: Callable[[str, TaskNode], Awaitable[bool]]  # (user_id, node) -> allowed
     router_select: Callable[[TaskNode], Awaitable[str]]  # (node) -> model_id
-    executor_fn: Callable[[TaskNode, str], Awaitable[Dict[str, Any]]]  # (node, model_id) -> output
+    executor_fn: Callable[..., Awaitable[Dict[str, Any]]]  # (node, model_id, feedback?) -> output
     ledger_emit: Callable[[str, Dict[str, Any]], Awaitable[None]]  # (event_type, payload)
 
 
@@ -78,7 +79,7 @@ class Orchestrator:
         task: TaskGraph,
         policy_check: Callable[[str, TaskNode], Awaitable[bool]],
         router_select: Callable[[TaskNode], Awaitable[str]],
-        executor_fn: Callable[[TaskNode, str], Awaitable[Dict[str, Any]]],
+        executor_fn: Callable[..., Awaitable[Dict[str, Any]]],
         ledger_emit: Callable[[str, Dict[str, Any]], Awaitable[None]],
     ) -> TaskGraph:
         """Main execution loop for a task."""
@@ -151,7 +152,7 @@ class Orchestrator:
         node: TaskNode,
         policy_check: Callable[[str, TaskNode], Awaitable[bool]],
         router_select: Callable[[TaskNode], Awaitable[str]],
-        executor_fn: Callable[[TaskNode, str], Awaitable[Dict[str, Any]]],
+        executor_fn: Callable[..., Awaitable[Dict[str, Any]]],
         ledger_emit: Callable[[str, Dict[str, Any]], Awaitable[None]],
     ) -> None:
         """Execute a single node with retries and checkpoints."""
@@ -219,7 +220,7 @@ class Orchestrator:
                         node.type.value,
                         node.attempts,
                         task.limits.max_retries,
-                        None,  # No critic result; treat as retryable
+                        None,  # No critic result; executor raised
                     )
                     if should_retry:
                         retry_feedback = str(e)
@@ -266,9 +267,32 @@ class Orchestrator:
                 'status': node.status.value,
             })
         
+        except PermissionError as e:
+            logger.error(f"Policy denial: {e}")
+            node.mark_failed(str(e))
+            # Emit ledger event for denied access
+            try:
+                await ledger_emit('policy.denied', {
+                    'task_id': task.task_id,
+                    'node_id': node.id,
+                    'user_id': task.user_id,
+                    'reason': str(e),
+                })
+            except Exception:
+                logger.exception("ledger emit failed for policy denial")
+        
         except Exception as e:
             logger.error(f"Node execution failed: {e}", exc_info=True)
             node.mark_failed(str(e))
+            # Emit ledger event for unexpected failure
+            try:
+                await ledger_emit('node.failed', {
+                    'task_id': task.task_id,
+                    'node_id': node.id,
+                    'error': str(e),
+                })
+            except Exception:
+                logger.exception("ledger emit failed for node failure")
     
     async def handle_checkpoint_decision(
         self,
@@ -276,41 +300,79 @@ class Orchestrator:
         checkpoint_id: str,
         decision: str,  # approve | edit | reject
         edit_data: Optional[Dict[str, Any]] = None,
+        decided_by: Optional[str] = None,
+        ledger_emit: Optional[Callable[[str, Dict[str, Any]], Awaitable[None]]] = None,
     ) -> TaskGraph:
-        """Handle a human checkpoint decision (approve/edit/reject)."""
+        """Apply a human checkpoint decision. Every decision is ledgered.
+        
+        Args:
+            task_id: Task ID
+            checkpoint_id: Checkpoint ID
+            decision: 'approve', 'edit', or 'reject'
+            edit_data: New output data (required if decision='edit')
+            decided_by: User ID or name of the person making the decision
+            ledger_emit: Async function to emit audit events
+        
+        Returns:
+            Updated task graph
+        
+        Raises:
+            ValueError: Invalid decision, bad edit data, or checkpoint not found
+        """
+        
+        if decision not in ('approve', 'edit', 'reject'):
+            raise ValueError(f"Invalid decision '{decision}'")
         
         task = await self.persistence.load(task_id)
         if not task:
             raise ValueError(f"Task {task_id} not found")
         
-        # Find checkpoint
         checkpoint = next((c for c in task.pending_checkpoints if c.id == checkpoint_id), None)
         if not checkpoint:
             raise ValueError(f"Checkpoint {checkpoint_id} not found")
         
-        checkpoint.decision = decision
-        checkpoint.decided_at = datetime.utcnow().isoformat()
+        node = task.nodes[checkpoint.node_id]
         
-        # Handle decision
-        if decision == 'approve':
-            node = task.nodes[checkpoint.node_id]
-            node.status = NodeStatus.DONE
-        elif decision == 'edit':
-            # Store edited data as new output
-            node = task.nodes[checkpoint.node_id]
+        # Validate BEFORE mutating anything, so a bad edit leaves the checkpoint pending
+        edit_sha = None
+        if decision == 'edit':
+            if not edit_data:
+                raise ValueError("edit decision requires edit_data")
+            result = await self.critic.verify(
+                node.id, node.type.value, edit_data, node.success_criteria)
+            if not result.passed:
+                raise ValueError(f"Edited output failed verification: {result.notes}")
             node.output_data = edit_data
+            node.verification = {'passed': True, 'notes': result.notes, 'edited_by_human': True}
             node.status = NodeStatus.DONE
-        elif decision == 'reject':
-            node = task.nodes[checkpoint.node_id]
+            edit_sha = hashlib.sha256(
+                json.dumps(edit_data, sort_keys=True).encode()).hexdigest()
+        elif decision == 'approve':
+            node.status = NodeStatus.DONE
+        else:  # reject
             node.mark_failed("Rejected by human")
+        
+        checkpoint.decision = decision
+        checkpoint.decided_by = decided_by
+        checkpoint.decided_at = datetime.utcnow().isoformat()
+        checkpoint.edit_data = edit_data
         
         task.pending_checkpoints.remove(checkpoint)
         task.checkpoint_decisions[checkpoint_id] = checkpoint
         
-        # Resume execution if paused
         if task.status == TaskStatus.PAUSED:
             task.status = TaskStatus.RUNNING
         
-        await self.persistence.save(task)
+        # Audit record first: if the ledger is down, the decision is not persisted
+        if ledger_emit:
+            await ledger_emit('checkpoint.decided', {
+                'task_id': task.task_id,
+                'node_id': node.id,
+                'checkpoint_id': checkpoint_id,
+                'decision': decision,
+                'decided_by': decided_by,
+                'edit_sha256': edit_sha,  # hash only; content stays out of the ledger
+            })
         
+        await self.persistence.save(task)
         return task
