@@ -6,5 +6,5 @@ __pycache__/
 .pytest_cache/
 __pycache__/
 test_run.log
-*.pdf
 .coverage
+TanishqYadav_*.pdf
