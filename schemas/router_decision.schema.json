@@ -20,7 +20,8 @@
         "modality": { "enum": ["text", "image", "pdf_scanned", "mixed"] },
         "complexity": { "enum": ["low", "medium", "high"] },
         "sensitivity": { "enum": ["public", "internal", "confidential", "board_only"] },
-        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "needs_clarification": { "type": "boolean" }
       }
     },
     "rule_matched": { "type": ["string", "null"] },

@@ -2,3 +2,9 @@
 *.bak
 __pycache__/
 .DS_Store
+.venv/
+.pytest_cache/
+__pycache__/
+test_run.log
+*.pdf
+.coverage
