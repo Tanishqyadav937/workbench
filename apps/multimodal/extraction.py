@@ -2,10 +2,12 @@
 
 import json
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Dict, List, Any, Optional, Tuple
 from abc import ABC, abstractmethod
 import base64
+
+from apps.governance.injection_scanner import scan as scan_injection
 
 try:
     from paddleocr import PaddleOCR
@@ -56,6 +58,9 @@ class ExtractionResult:
     confidence_threshold: float = 0.80
     model_used: Optional[str] = None
     processing_time_ms: Optional[float] = None
+    quarantined: bool = False
+    injection_findings: List[Dict[str, str]] = field(default_factory=list)
+    quarantine_cleared_by: Optional[str] = None
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -65,6 +70,9 @@ class ExtractionResult:
             'confidence_threshold': self.confidence_threshold,
             'model_used': self.model_used,
             'processing_time_ms': self.processing_time_ms,
+            'quarantined': self.quarantined,
+            'injection_findings': self.injection_findings,
+            'quarantine_cleared_by': self.quarantine_cleared_by,
         }
     
     def needs_review_count(self) -> int:
@@ -74,7 +82,29 @@ class ExtractionResult:
     def ready_for_export(self) -> bool:
         """Check if all flagged fields have been confirmed."""
         # This would be checked after human review
-        return self.needs_review_count() == 0
+        return self.needs_review_count() == 0 and not self.is_blocked()
+
+    def scan_for_injection(self) -> bool:
+        """Scan extracted text for instruction-like content; quarantine on 2+ rules."""
+        values = [f.value for f in self.fields if f.value]
+        found = {}
+        for sep in ("\n", " "):
+            for finding in scan_injection(sep.join(values)):
+                found.setdefault(finding.rule, finding.excerpt)
+        self.injection_findings = [{"rule": r, "excerpt": e} for r, e in found.items()]
+        self.quarantined = len(self.injection_findings) >= 2
+        self.quarantine_cleared_by = None
+        return self.quarantined
+
+    def is_blocked(self) -> bool:
+        return self.quarantined and not self.quarantine_cleared_by
+
+    def clear_quarantine(self, by: str) -> None:
+        """A named human confirms the flagged document is safe to use."""
+        if not by:
+            raise ValueError("clearing a quarantine requires a reviewer id")
+        if self.quarantined:
+            self.quarantine_cleared_by = by
 
 
 class OCRBackend(ABC):
@@ -281,6 +311,10 @@ Be specific and extract exact values. Set confidence to 1.0 if certain, 0.5 if u
             except Exception as e:
                 logger.error(f"VLM extraction failed: {e}")
         
+        if result.scan_for_injection():
+            logger.warning(f"Document {doc_id} quarantined: "
+                           f"{[f['rule'] for f in result.injection_findings]}")
+
         result.processing_time_ms = (time.time() - start) * 1000
         
         return result
