@@ -68,23 +68,29 @@ class QuarantineTests(unittest.TestCase):
 
 
 class PlannerGuardTests(unittest.TestCase):
-    def test_planning_prompt_ignores_request_context(self):
-        """Free-text request fields must not reach the planner prompt (injection channel)."""
+    CORE = {"goal", "purpose", "user_id", "user_clearance"}
+
+    def _prompt_with(self, extra_value):
         from unittest.mock import MagicMock
         from apps.orchestrator.planner import Planner
-        marker = "ZZ-INJECTED-MARKER-ZZ"
         kwargs = dict(goal="Review report", purpose="inspection_review",
                       user_id="u-1", user_clearance="internal")
-        names = {f.name for f in dataclasses.fields(PlanRequest)}
-        if "context" in names:
-            kwargs["context"] = marker
-        prompt = Planner(MagicMock())._build_prompt(PlanRequest(**kwargs))
-        self.assertNotIn(marker, prompt)
+        for f in dataclasses.fields(PlanRequest):
+            if f.name not in self.CORE:
+                kwargs[f.name] = extra_value
+        return Planner(MagicMock())._build_prompt(PlanRequest(**kwargs))
+
+    def test_free_form_request_fields_never_reach_the_planner_prompt(self):
+        """Any non-core PlanRequest field (context, constraints, ...) is an injection channel
+        if it is rendered into the prompt. Try string, list and dict shapes."""
+        marker = "ZZ-INJECTED-MARKER-ZZ"
+        for value in (marker, [marker], {"k": marker}):
+            self.assertNotIn(marker, self._prompt_with(value))
 
     def test_plan_request_fields_are_a_known_set(self):
         """Adding a field to PlanRequest should be a deliberate, reviewed decision."""
         names = {f.name for f in dataclasses.fields(PlanRequest)}
-        allowed = {"goal", "purpose", "user_id", "user_clearance", "context"}
+        allowed = self.CORE | {"context", "constraints"}
         self.assertLessEqual(names, allowed, "new PlanRequest fields: %s" % (names - allowed))
 
 
